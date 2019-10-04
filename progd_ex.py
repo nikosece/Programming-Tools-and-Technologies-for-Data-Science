@@ -11,6 +11,7 @@ keep_time = 1465         # max time before sell,4 years
 file_names = [f for f in listdir('C:/Users/tzagk/Downloads/Stocks') if isfile(join('C:/Users/tzagk/Downloads/Stocks', f))]
 dates_dict = {}
 mylist = list()
+transactions = list()
 
 def open_txt(name):
     return pd.read_csv('C:/Users/tzagk/Downloads/Stocks/'+name, header = 0, index_col=0)
@@ -25,13 +26,11 @@ def buy_total(frame,date,code):
         return 0
 
 def buy(name,date,code):
-    global total_money
-    global purchased
-    global current_date
+    global total_money,purchased,current_date,transactions
     frame = open_txt(name)
     total = buy_total(frame,date,'Low')
     if(total>0):
-        print(date,'buy-'+code,name.split(sep='.')[0].upper(),total)
+        transactions.append(date,'buy-'+code,name.split(sep='.')[0].upper(),total)
         total_money -= total * frame.at[date,code]
         current_date = date
         if name in purchased:
@@ -48,12 +47,10 @@ def sell_total(frame,date,name):
     return max_amount if max_allowed > max_amount else max_allowed
 
 def sell(date,name,code):
-        global total_money
-        global purchased
-        global current_date
+        global total_money,purchased,current_date,transactions
         frame = open_txt(name)
         total = sell_total(frame,date,name)
-        print(date,'sell-'+code,name.split(sep='.')[0].upper(),total)
+        transactions.append(date,'sell-'+code,name.split(sep='.')[0].upper(),total)
         total_money += total * frame.at[date,code]
         current_date = date
         if purchased[name][0] == total:
@@ -143,3 +140,4 @@ while current_date <= '2017-10-11':
         sell(c,who,'High')
     chang_date()
 print(total_money)
+print(transactions)
