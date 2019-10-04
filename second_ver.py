@@ -116,9 +116,9 @@ def find_something(threl=1.2):           # find an oportunity and return name an
         if dates_dict[x][0] <= min_date:       # dont open all files
             data = open_txt(x)
             if data[data.index>current_date].head(240).Low.min() <= total_money:       # find the min date at four months
-                ans,res,when_sell=worth_buy(data,data[data.index>=current_date].head(240).Low.idxmin(),'Low',thres=threl) # check worth
+                ans,res,when_sell=worth_buy(data,data[data.index>current_date].head(240).Low.idxmin(),'Low',thres=threl) # check worth
                 if ans:
-                    worthing.append([data[data.index>=current_date].head(240).Low.idxmin(),x,res,when_sell])
+                    worthing.append([data[data.index>current_date].head(240).Low.idxmin(),x,res,when_sell])
                     if min_date_sell <= current_date:
                         min_date_sell = when_sell
                     if min_date_sell > when_sell:
@@ -148,4 +148,4 @@ while current_date <= '2017-10-11':
         current_date = min_date_sell
     for key in list(purchased.keys()):
         if worth_sell(key):
-            sell(current_date,key,'High')        
+            sell(current_date,key,'High')
