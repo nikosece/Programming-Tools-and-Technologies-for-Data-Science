@@ -103,7 +103,7 @@ def initialize():
 
 
 
-def find_something():
+def find_something():           # find an oportunity and return name and date
     global current_date,total_money,min_date,current_name,dates_dict,mylist
     worthing=1
     temp_date = current_date
@@ -111,7 +111,7 @@ def find_something():
     for x in mylist:
         if dates_dict[x] <= min_date:       # dont open all files
             data = open_txt(x)
-            if data.index[0] > current_date:           #
+            if data.index[0] > current_date:           #ayto fainetai lathos
                 if data.head(120).Low.min() <= total_money:       # find the min date at four months
                     ans,res=worth_buy(data,data.head(120).Low.idxmin(),'Low',thres=1.5) # check worth
                     if ans:
@@ -119,8 +119,13 @@ def find_something():
                             worthing = res
                             temp_date = data.head(120).Low.idxmin()  # set start date
                             current_name = x
-
-    print("found",current_name, "something at",temp_date,'worthing:',worthing)
+    return current_name,temp_date
+def chang_date():
+    global min_date,current_date
+    try:
+        min_date = indexing_list[indexing_list.index(current_date)+1825]
+    except:
+        min_date = '2017-10-11'
 
 initialize()
 data = open_txt(current_name)
@@ -130,4 +135,11 @@ for key in list(purchased.keys()):
     a,b,c=worth_sell(key,'High')
     if a:
         sell(c,key,'High')
-min_date = indexing_list[indexing_list.index(current_date)+1825]     #checking max 5 years
+while current_date <= '2017-10-11':
+    who,when=find_something()
+    buy(who,when,'Low')
+    a,b,c = worth_sell(who,'High')
+    if a:
+        sell(c,who,'High')
+    chang_date()
+print(total_money)
