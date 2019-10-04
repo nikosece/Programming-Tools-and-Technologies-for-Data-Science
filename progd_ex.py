@@ -1,5 +1,5 @@
 from os import listdir
-from os.path import isfile, join
+from os.path import isfile, join,getsize
 import pandas as pd
 
 total_money = 1
@@ -7,9 +7,11 @@ purchased = {}              # quantity, buy price, date
 min_date = '1970-01-01'
 current_date = '1970-01-01'
 current_name =''
-name = ''
 keep_time = 1465         # max time before sell,4 years
-file_names =''
+file_names = [f for f in listdir('C:/Users/tzagk/Downloads/Stocks') if isfile(join('C:/Users/tzagk/Downloads/Stocks', f))]
+dates_dict = {}
+mylist = list()
+
 def open_txt(name):
     return pd.read_csv('C:/Users/tzagk/Downloads/Stocks/'+name, header = 0, index_col=0)
 
@@ -83,13 +85,13 @@ def worth_sell(name,code,thres=1.5):  # che if i should sell
 
 
 def initialize():
-    global current_date,name,data,file_names,current_name
-    file_names = [f for f in listdir('C:/Users/tzagk/Downloads/Stocks') if isfile(join('C:/Users/tzagk/Downloads/Stocks', f))]
-    mylist = list()
+    global current_date,name,data,file_names,current_name,dates_dict,mylist
     worthing=1
     for x in file_names:
-        try:
+        if getsize('C:/Users/tzagk/Downloads/Stocks/'+x)>0:
             data = open_txt(x)
+            dates_dict[x] = data.index[0]               # store start_time
+            mylist.append(x)
             if data.index[0] <= min_date:           #
                 if data.head(120).Low.min() <=1:       # find the min date at four months
                     ans,res=worth_buy(data,data.head(120).Low.idxmin(),'Low',thres=1.2) # check worth
@@ -99,14 +101,33 @@ def initialize():
                             current_date = data.head(120).Low.idxmin()  # set start date
                             current_name = x
 
-        except:
-            mylist.append('File '+x+' is empty')
 
-    #
+
+def find_something():
+    global current_date,total_money,min_date,current_name,dates_dict,mylist
+    worthing=1
+    temp_date = current_date
+    i=0
+    for x in mylist:
+        if dates_dict[x] <= min_date:       # dont open all files
+            data = open_txt(x)
+            if data.index[0] > current_date:           #
+                if data.head(120).Low.min() <= total_money:       # find the min date at four months
+                    ans,res=worth_buy(data,data.head(120).Low.idxmin(),'Low',thres=1.5) # check worth
+                    if ans:
+                        if res > worthing:      # check best worth
+                            worthing = res
+                            temp_date = data.head(120).Low.idxmin()  # set start date
+                            current_name = x
+
+    print("found",current_name, "something at",temp_date,'worthing:',worthing)
 
 initialize()
+data = open_txt(current_name)
+indexing_list = data.index.values.tolist()      # in this way i can control dates
 buy(current_name,current_date,'Low')
 for key in list(purchased.keys()):
-    a,b,c=worth_sell(x,'High')
+    a,b,c=worth_sell(key,'High')
     if a:
-        sell(c,x,'High')
+        sell(c,key,'High')
+min_date = indexing_list[indexing_list.index(current_date)+1825]     #checking max 5 years
