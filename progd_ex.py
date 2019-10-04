@@ -30,7 +30,7 @@ def buy(name,date,code):
     frame = open_txt(name)
     total = buy_total(frame,date,'Low')
     if(total>0):
-        transactions.append(date,'buy-'+code,name.split(sep='.')[0].upper(),total)
+        transactions.append((date,'buy-'+code,name.split(sep='.')[0].upper(),total))
         total_money -= total * frame.at[date,code]
         current_date = date
         if name in purchased:
@@ -50,7 +50,7 @@ def sell(date,name,code):
         global total_money,purchased,current_date,transactions
         frame = open_txt(name)
         total = sell_total(frame,date,name)
-        transactions.append(date,'sell-'+code,name.split(sep='.')[0].upper(),total)
+        transactions.append((date,'sell-'+code,name.split(sep='.')[0].upper(),total))
         total_money += total * frame.at[date,code]
         current_date = date
         if purchased[name][0] == total:
