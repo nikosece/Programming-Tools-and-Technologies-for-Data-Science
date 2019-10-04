@@ -1,5 +1,6 @@
 from os import listdir
 from os.path import isfile, join,getsize
+from operator import itemgetter
 import pandas as pd
 
 total_money = 1
@@ -14,7 +15,7 @@ mylist = list()
 transactions = list()
 
 def open_txt(name):
-    return pd.read_csv('C:/Users/tzagk/Downloads/Stocks/'+name, header = 0, index_col=0)
+    return dates_dict[name][1]
 
 def buy_total(frame,date,code):
     global total_money
@@ -73,13 +74,16 @@ def worth_buy(frame,date,code,thres=1.5):              #thelei ftiaksimo wste na
 
 def worth_sell(name,code,thres=1.5):  # che if i should sell
     global keep_time,purchased,current_date,min_date
-    frame = open_txt(name)
-    date = purchased[name][2]
-    if(frame.at[date,code]>0):                      # price can't be zero
-        checking=frame[frame.index>=current_date].head(keep_time)
-        ans=((checking.High/purchased[name][1]).max())
-        when = ((checking.High/purchased[name][1]).idxmax())
-        return ((checking.High/purchased[name][1]).max()) >= thres,ans,when
+    if purchased[name][2] < current_date:
+        frame = open_txt(name)
+        date = purchased[name][2]
+        if(frame.at[date,code]>0):                      # price can't be zero
+            checking=frame[frame.index>=current_date].head(keep_time)
+            ans=((checking.High/purchased[name][1]).max())
+            when = ((checking.High/purchased[name][1]).idxmax())
+            return ((checking.High/purchased[name][1]).max()) >= thres,ans,when
+        else:
+            return False,0,''
     else:
         return False,0,''
 
@@ -89,8 +93,8 @@ def initialize():
     worthing=1
     for x in file_names:
         if getsize('C:/Users/tzagk/Downloads/Stocks/'+x)>0:
-            data = open_txt(x)
-            dates_dict[x] = data.index[0]               # store start_time
+            data = pd.read_csv('C:/Users/tzagk/Downloads/Stocks/'+x, header = 0, index_col=0)
+            dates_dict[x] = [data.index[0],data]               # store start_time
             mylist.append(x)
             if data.index[0] <= min_date:           #
                 if data.head(120).Low.min() <=1:       # find the min date at four months
@@ -105,20 +109,19 @@ def initialize():
 
 def find_something():           # find an oportunity and return name and date
     global current_date,total_money,min_date,current_name,dates_dict,mylist
-    worthing=1
+    worthing = list()
     temp_date = current_date
     for x in mylist:
-        if dates_dict[x] <= min_date:       # dont open all files
+        if dates_dict[x][0] <= min_date:       # dont open all files
             data = open_txt(x)
             if data.index[0] > current_date:           #ayto fainetai lathos
                 if data.head(120).Low.min() <= total_money:       # find the min date at four months
-                    ans,res=worth_buy(data,data.head(120).Low.idxmin(),'Low',thres=1.5) # check worth
+                    ans,res=worth_buy(data,data.head(120).Low.idxmin(),'Low',thres=2) # check worth
                     if ans:
-                        if res > worthing:      # check best worth
-                            worthing = res
-                            temp_date = data.head(120).Low.idxmin()  # set start date
-                            current_name = x
-    return current_name,temp_date
+                        worthing.append([data.head(120).Low.idxmin(),x,res])
+
+    return sorted(worthing, key=itemgetter(0))
+
 def chang_date():
     global min_date,current_date
     try:
@@ -135,8 +138,9 @@ for key in list(purchased.keys()):
     if a:
         sell(c,key,'High')
 while current_date <= '2017-10-11':
-    who,when=find_something()
-    buy(who,when,'Low')
+    founded=find_something()
+    for x in founded:
+        buy(x[1],x[0],'Low')
     for key in list(purchased.keys()):
         a,b,c=worth_sell(key,'High')
         if a:
