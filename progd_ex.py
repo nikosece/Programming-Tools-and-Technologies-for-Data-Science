@@ -30,9 +30,11 @@ def buy(name,date,code):
     frame = open_txt(name)
     total = buy_total(frame,date,'Low')
     if(total>0):
+        print (date,'buy-'+code,name.split(sep='.')[0].upper(),total)
         transactions.append((date,'buy-'+code,name.split(sep='.')[0].upper(),total))
         total_money -= total * frame.at[date,code]
         current_date = date
+        chang_date()
         if name in purchased:
             purchased[name] = [(purchased[name] + total),frame.at[date,code],date]
         else:
@@ -50,9 +52,11 @@ def sell(date,name,code):
         global total_money,purchased,current_date,transactions
         frame = open_txt(name)
         total = sell_total(frame,date,name)
+        print (date,'sell-'+code,name.split(sep='.')[0].upper(),total)
         transactions.append((date,'sell-'+code,name.split(sep='.')[0].upper(),total))
         total_money += total * frame.at[date,code]
         current_date = date
+        chang_date()
         if purchased[name][0] == total:
             del purchased[name]
         else:
@@ -68,12 +72,11 @@ def worth_buy(frame,date,code,thres=1.5):              #thelei ftiaksimo wste na
         return False,0
 
 def worth_sell(name,code,thres=1.5):  # che if i should sell
-    global keep_time
-    global purchased
+    global keep_time,purchased,current_date,min_date
     frame = open_txt(name)
     date = purchased[name][2]
     if(frame.at[date,code]>0):                      # price can't be zero
-        checking=frame[frame.index>date].head(keep_time)
+        checking=frame[frame.index>=current_date].head(keep_time)
         ans=((checking.High/purchased[name][1]).max())
         when = ((checking.High/purchased[name][1]).idxmax())
         return ((checking.High/purchased[name][1]).max()) >= thres,ans,when
@@ -104,7 +107,6 @@ def find_something():           # find an oportunity and return name and date
     global current_date,total_money,min_date,current_name,dates_dict,mylist
     worthing=1
     temp_date = current_date
-    i=0
     for x in mylist:
         if dates_dict[x] <= min_date:       # dont open all files
             data = open_txt(x)
@@ -120,7 +122,7 @@ def find_something():           # find an oportunity and return name and date
 def chang_date():
     global min_date,current_date
     try:
-        min_date = indexing_list[indexing_list.index(current_date)+1825]
+        min_date = indexing_list[indexing_list.index(current_date)+1825]    # 5 years
     except:
         min_date = '2017-10-11'
 
@@ -135,9 +137,8 @@ for key in list(purchased.keys()):
 while current_date <= '2017-10-11':
     who,when=find_something()
     buy(who,when,'Low')
-    a,b,c = worth_sell(who,'High')
-    if a:
-        sell(c,who,'High')
-    chang_date()
+    for key in list(purchased.keys()):
+        a,b,c=worth_sell(key,'High')
+        if a:
+            sell(c,key,'High')
 print(total_money)
-print(transactions)
