@@ -41,9 +41,14 @@ def buy(name,date,code,when_sell):
             chang_date()
             if name in purchased:
                 purchased[name] = [(purchased[name][0] + total),frame.at[date,code],date,when_sell]
+                return True
             else:
                 purchased[name] = [total,frame.at[date,code],date,when_sell]
-
+                return True
+        else:
+            return False
+    else:
+        return False
 
 def sell_total(frame,date,name):
     global total_money
@@ -138,14 +143,21 @@ for key in list(purchased.keys()):
     if worth_sell(key):
         sell(current_date,key,'High')
 while current_date <= '2017-10-11':
-    founded=find_something()
+    if(total_money>1000000):
+        founded=find_something(threl=500)
+    elif(total_money>500000):
+        founded=find_something(threl=200)
+    elif(total_money>250000):
+        founded=find_something(threl=100)
+    else:
+        founded=find_something()
     buyed = False
     for x in founded:
         if x[3] <= min_date_sell:
-            buy(x[1],x[0],'Low',x[3])
-            buyed = True
+            buyed = buy(x[1],x[0],'Low',x[3])
     if not buyed or len(founded)==0:
         current_date = min_date_sell
     for key in list(purchased.keys()):
         if worth_sell(key):
             sell(current_date,key,'High')
+print(total_money)
