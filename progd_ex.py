@@ -60,9 +60,9 @@ def buy(name,date,code,when_sell):
         return False
 
 def best_sell_date(name, date):
-    global current_date,keep_time
+    global current_date,keep_time,end_date
     frame = open_txt(name)
-    checking=frame[(frame.index>date) & (frame.index<= date)].head(keep_time)
+    checking=frame[(frame.index>date) & (frame.index<= end_date)].head(keep_time)
     if checking.empty: return '2020-12-30'  # date out of limits
     when_sell=((checking.High/frame.at[current_date,code]).idxmax())
     return when_sell
