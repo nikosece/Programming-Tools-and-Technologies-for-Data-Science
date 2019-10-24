@@ -363,8 +363,6 @@ def run_now():
             del sell_dict[current_date]
         if not buyed and len(purchased) == 0 and len(founded) == 0 and not selled:
             break
-        if current_date >= '2008-01-01':
-        	break
 
     	    
     print('Total transactions:', len(transactions))
