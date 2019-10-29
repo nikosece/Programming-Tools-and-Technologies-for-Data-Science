@@ -97,9 +97,9 @@ def find_min_date():
     """ Finds the first stock to sell.
         Must be called everytime after
         sell function"""
-    global min_date_sell, purchased
+    global min_date_sell, purchased, sell_dict
     if len(purchased) > 0:
-        min_date_sell = min(min(purchased[stock][3].split(sep='/')) for stock in purchased)
+        min_date_sell = min(sell_dict.keys())
     else:
         min_date_sell = end_date
 
@@ -175,6 +175,9 @@ def buy(stock_name, date, code, when_sell):
             min_date_sell = when_sell
         if stock_name in purchased:  # maybe i already have bought some stocks
             when_sell1 = purchased[stock_name][3] + '/' + when_sell
+            test_list = when_sell1.split(sep='/')
+            test_list = sorted(test_list)
+            when_sell1 = '/'.join(test_list)
             purchased[stock_name] = [(purchased[stock_name][0] + total), frame.at[date, code], date,
                                      when_sell1, frame.at[when_sell, 'High']]  # isws lista me dates                         
         else:
@@ -207,6 +210,7 @@ def sell(date, stock_name, code):
     global total_money, purchased, current_date, transactions, min_date_sell, selling_test
     frame = open_txt(stock_name)
     total = selling_test[stock_name + date]
+    del selling_test[stock_name + date]
     print(date, 'sell-high', stock_name.split(sep='.')[0].upper(), total)
     transactions.append(date + ' sell-high ' + stock_name.split(sep='.')[0].upper() + " " + str(total))
     total_money += total * frame.at[date, code]
@@ -215,7 +219,6 @@ def sell(date, stock_name, code):
     else:
         purchased[stock_name][0] -= total
         purchased[stock_name][3] = ''.join((purchased[stock_name][3].split(sep='/', maxsplit=1)[1::]))
-    find_min_date()
 
 
 def initialize():
@@ -355,6 +358,7 @@ def run_now(x1=1.4,x2=370, x3=15):
                     sell(current_date, stock, 'High')
                     selled = True
             del sell_dict[current_date]
+            find_min_date()
             # if current_date > '1975-01-01':
             #     chang_date(90)  # changes the max date i look for stocks
             # else:
@@ -391,8 +395,8 @@ if __name__ == '__main__':
         if worth_sell(key):
             sell(current_date, key, 'High')
             del sell_dict[current_date]
+    find_min_date()
     reduced_stocks = reduce_stocks(40)
     start = time.time()
     run_now()
     print('It took', time.time() - start, 'seconds.')
-    
