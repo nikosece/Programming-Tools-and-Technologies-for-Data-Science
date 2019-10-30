@@ -79,7 +79,7 @@ def buy_total(frame, date, buy_value, sell_date):  # if i keep them it is more c
     global total_money
     volume = frame.at[date, 'Volume']
     if volume > 0:  # Volume can't be zero
-        max_amount = (total_money // buy_value)  # total must be integer
+        max_amount = int(total_money // buy_value)  # total must be integer
         max_allowed = int(volume * 0.1)  # 10% limit
         max_sell = int(frame.at[sell_date, 'Volume'] * 0.1)  # 10% limit sell
 
