@@ -8,10 +8,6 @@ from multiprocessing import Pool
 import time
 
 
-# import cProfile
-# import matplotlib.pyplot as plt
-
-
 def reset_system(when='2017-11-10'):
     global total_money, both_money, purchased, min_date, current_date, transactions, sell_dict, min_date_sell, selling_test, end_date
     total_money = 1  # starting with 1$
@@ -188,7 +184,7 @@ def find_something(threl=2.0, my_limit=150, far=365, mystocks=None):
     global current_date, total_money, min_date, current_name, dates_dict, mylist, min_date_sell, reduced_stocks, mylist2
     worthing = list()
     min_date = current_date + datetime.timedelta(days=1200)
-    far2 = current_date + datetime.timedelta(days=2*far)
+    far2 = current_date + datetime.timedelta(days=2 * far)
     if far2 > min_date_sell:
         far2 = min_date_sell
     if current_date <= convert_date('2005-01-01'):
@@ -280,14 +276,6 @@ def run_now():
                 if founded[re][0] <= min_date_sell:
                     if buy(founded[re][1], founded[re][0], 'Low', founded[re][3]):
                         buyed = True
-        # else:
-        #     if current_date > '2013-01-01':  # and len(purchased) < 500:
-        #         set_trace()
-        # #         founded = find_something(1.3, 2200, c + 1, reduced_stocks)
-        # #         # set_trace()
-        # #     for x in range(len(founded)):
-        # #         if buy(founded[x][1], founded[x][0], 'Low', founded[x][3]):
-        # #             buyed = True
         both_money = sum(purchased[y][0] * purchased[y][4] for y in purchased) + total_money
         if (not buyed or len(founded) == 0) and len(purchased) > 0:
             if min_date_sell > current_date:
