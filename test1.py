@@ -188,13 +188,16 @@ def find_something(threl=2.0, my_limit=150, far=365, mystocks=None):
     global current_date, total_money, min_date, current_name, dates_dict, mylist, min_date_sell, reduced_stocks, mylist2
     worthing = list()
     min_date = current_date + datetime.timedelta(days=1200)
+    far2 = current_date + datetime.timedelta(days=2*far)
+    if far2 > min_date_sell:
+        far2 = min_date_sell
     if current_date <= convert_date('2005-01-01'):
         for stock_name in mylist2:
             if dates_dict[stock_name][0] <= min_date:  # dont open all files
                 frame = dates_dict[stock_name][1]
-                temp = frame.loc[current_date:min_date_sell]
+                temp = frame.loc[current_date:far2]
                 if not temp.empty:
-                    mydate = temp.head(far).Low.idxmin()
+                    mydate = temp.Low.idxmin()
                     my_min = temp.at[mydate, 'Low']
                     if total_money >= my_min > 0:  # find the min date at four months
                         ans, res, when_sell, total, income = worth_buy(stock_name, frame, mydate, 'Low',
@@ -213,9 +216,9 @@ def find_something(threl=2.0, my_limit=150, far=365, mystocks=None):
         for stock_name in mystocks:
             if dates_dict[stock_name][0] <= current_date:
                 frame = reduced_stocks[stock_name]
-                temp = frame.loc[current_date:min_date_sell]
+                temp = frame.loc[current_date:far2]
                 if not temp.empty:
-                    mydate = temp.head(far).Low.idxmin()
+                    mydate = temp.Low.idxmin()
                     my_min = temp.at[mydate, 'Low']
                     if total_money >= my_min > 0:  # find the min date at four months
                         ans, res, when_sell, total, income = worth_buy(stock_name, frame, mydate, 'Low',
