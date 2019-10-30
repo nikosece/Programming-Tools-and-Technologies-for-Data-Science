@@ -96,10 +96,10 @@ def buy_total(frame, date, code, sell_date):  # if i keep them it is more compli
         return 0
 
 
-def worth_buy(stock_name, frame, date, code, thres=2.0, sell_limit=0):
+def worth_buy(buy_value, stock_name, frame, date, code, thres=2.0, sell_limit=0):
     """ Checks if the stock
         is wotrth buying"""
-    global keep_time, end_date, total_money, sell_dict
+    global keep_time, end_date, total_money, sell_dict, selling_test
     if stock_name + str(date) in selling_test:
         return False, 0, '', 0, 0
     over = find_limit(date, sell_limit)
@@ -108,8 +108,7 @@ def worth_buy(stock_name, frame, date, code, thres=2.0, sell_limit=0):
     checking = frame.loc[date:over]
     if checking.empty:
         return False, 0, '', 0, 0  # anything at date limits
-    when_sell = ((checking.High / frame.at[date, code]).idxmax())
-    buy_value = frame.at[date, code]
+    when_sell = checking.High.idxmax()
     sell_value = frame.at[when_sell, code]
     total = buy_total(frame, date, code, when_sell)
     ans = sell_value / buy_value  # mporw na exw sunartisi
@@ -196,7 +195,7 @@ def find_something(threl=2.0, my_limit=150, far=365, mystocks=None):
                     mydate = temp.Low.idxmin()
                     my_min = temp.at[mydate, 'Low']
                     if total_money >= my_min > 0:  # find the min date at four months
-                        ans, res, when_sell, total, income = worth_buy(stock_name, frame, mydate, 'Low',
+                        ans, res, when_sell, total, income = worth_buy(my_min, stock_name, frame, mydate, 'Low',
                                                                        thres=threl,
                                                                        sell_limit=my_limit)
                         if ans:
@@ -217,7 +216,7 @@ def find_something(threl=2.0, my_limit=150, far=365, mystocks=None):
                     mydate = temp.Low.idxmin()
                     my_min = temp.at[mydate, 'Low']
                     if total_money >= my_min > 0:  # find the min date at four months
-                        ans, res, when_sell, total, income = worth_buy(stock_name, frame, mydate, 'Low',
+                        ans, res, when_sell, total, income = worth_buy(my_min, stock_name, frame, mydate, 'Low',
                                                                        thres=threl,
                                                                        sell_limit=my_limit)
                         if ans and total > 100:
