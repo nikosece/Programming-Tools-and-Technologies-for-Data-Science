@@ -73,13 +73,14 @@ def find_min_date():
         min_date_sell = end_date
 
 
-def buy_total(frame, date, code, sell_date):  # if i keep them it is more complicated
+def buy_total(frame, date, buy_value, sell_date):  # if i keep them it is more complicated
     """ Calculate the maximum Stocks
         can be bought and sold at sell date"""
     global total_money
-    if frame.at[date, 'Volume'] > 0:  # Volume can't be zero
-        max_amount = int(total_money // frame.at[date, code])  # total must be integer
-        max_allowed = int(frame.at[date, 'Volume'] * 0.1)  # 10% limit
+    volume = frame.at[date, 'Volume']
+    if volume > 0:  # Volume can't be zero
+        max_amount = (total_money // buy_value)  # total must be integer
+        max_allowed = int(volume * 0.1)  # 10% limit
         max_sell = int(frame.at[sell_date, 'Volume'] * 0.1)  # 10% limit sell
 
         if max_amount < max_allowed:
@@ -110,7 +111,7 @@ def worth_buy(buy_value, stock_name, frame, date, code, thres=2.0, sell_limit=0)
         return False, 0, '', 0, 0  # anything at date limits
     when_sell = checking.High.idxmax()
     sell_value = frame.at[when_sell, code]
-    total = buy_total(frame, date, code, when_sell)
+    total = buy_total(frame, date, buy_value, when_sell)
     ans = sell_value / buy_value  # mporw na exw sunartisi
     income = (sell_value - buy_value) * total
     return ans >= thres, ans, when_sell, total, income
@@ -121,7 +122,8 @@ def buy(stock_name, date, code, when_sell):
         to date of bought """
     global total_money, purchased, current_date, transactions, min_date_sell, both_money, sell_dict, selling_test, dates_dict
     frame = dates_dict[stock_name][1]
-    total = buy_total(frame, date, code, when_sell)
+    price = frame.at[date, 'Low']
+    total = buy_total(frame, date, price, when_sell)
     if date >= current_date and total > 0:
         print(date.date(), 'buy-low', stock_name.split(sep='.')[0].upper(), total)
         transactions.append(str(date.date()) + ' buy-low ' + stock_name.split(sep='.')[0].upper() + " " + str(total))
