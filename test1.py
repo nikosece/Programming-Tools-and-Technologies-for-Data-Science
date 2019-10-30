@@ -99,7 +99,7 @@ def buy_total(frame, date, code, sell_date):  # if i keep them it is more compli
 def worth_buy(buy_value, stock_name, frame, date, code, thres=2.0, sell_limit=0):
     """ Checks if the stock
         is wotrth buying"""
-    global keep_time, end_date, total_money, sell_dict, selling_test
+    global keep_time, end_date, total_money, sell_dict
     if stock_name + str(date) in selling_test:
         return False, 0, '', 0, 0
     over = find_limit(date, sell_limit)
@@ -113,10 +113,7 @@ def worth_buy(buy_value, stock_name, frame, date, code, thres=2.0, sell_limit=0)
     total = buy_total(frame, date, code, when_sell)
     ans = sell_value / buy_value  # mporw na exw sunartisi
     income = (sell_value - buy_value) * total
-    if when_sell <= end_date:
-        return ans >= thres, ans, when_sell, total, income
-    else:
-        return False, 0, '', 0, 0
+    return ans >= thres, ans, when_sell, total, income
 
 
 def buy(stock_name, date, code, when_sell):
@@ -288,7 +285,8 @@ def run_now():
         current_date = find_limit(current_date, 1)
         if not buyed and len(purchased) == 0 and len(founded) == 0 and not selled1:
             break
-
+        # if current_date >= date2:
+        #     break
     print('Total transactions:', len(transactions))
     print('Total $ in billions:', total_money / 10 ** 9)
     print('Both money $ in billions:', both_money / 10 ** 9)
