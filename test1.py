@@ -5,6 +5,7 @@ import pandas as pd
 import datetime
 import numpy as np
 from multiprocessing import Pool
+from pdb import set_trace
 import time
 
 
@@ -103,13 +104,9 @@ def worth_buy(buy_value, stock_name, frame, date, code, thres=2.0, sell_limit=0)
     global keep_time, end_date, total_money, sell_dict
     if stock_name + str(date) in selling_test:
         return False, 0, '', 0, 0
-    over = find_limit(date, sell_limit)
     if stock_name in purchased:
-        frame = frame.drop(purchased[stock_name][3])
-    checking = frame.loc[date:over]
-    if checking.empty:
-        return False, 0, '', 0, 0  # anything at date limits
-    when_sell = checking.High.idxmax()
+        frame = frame.drop(purchased[stock_name][3], errors='ignore')
+    when_sell = frame.High.idxmax()
     sell_value = frame.at[when_sell, code]
     total = buy_total(frame, date, buy_value, when_sell)
     ans = sell_value / buy_value  # mporw na exw sunartisi
@@ -193,7 +190,9 @@ def find_something(threl=2.0, my_limit=150, far=365, mystocks=None):
                 if not temp.empty:
                     mydate = temp.Low.idxmin()
                     my_min = temp.at[mydate, 'Low']
-                    if total_money >= my_min > 0:  # find the min date at four months
+                    where = mydate + datetime.timedelta(days=my_limit)
+                    frame = frame.loc[mydate:where]
+                    if total_money >= my_min > 0 and frame.High.max() / my_min > threl:
                         ans, res, when_sell, total, income = worth_buy(my_min, stock_name, frame, mydate, 'Low',
                                                                        thres=threl,
                                                                        sell_limit=my_limit)
@@ -206,6 +205,7 @@ def find_something(threl=2.0, my_limit=150, far=365, mystocks=None):
                                     worthing.append([mydate, stock_name, res, when_sell, total, income])
                             else:
                                 worthing.append([mydate, stock_name, res, when_sell, total, income])
+
     else:
         for stock_name in mystocks:
             if dates_dict[stock_name][0] <= current_date:
@@ -214,7 +214,9 @@ def find_something(threl=2.0, my_limit=150, far=365, mystocks=None):
                 if not temp.empty:
                     mydate = temp.Low.idxmin()
                     my_min = temp.at[mydate, 'Low']
-                    if total_money >= my_min > 0:  # find the min date at four months
+                    where = mydate + datetime.timedelta(days=my_limit)
+                    frame = frame.loc[mydate:where]
+                    if total_money >= my_min > 0 and frame.High.max() / my_min > threl:
                         ans, res, when_sell, total, income = worth_buy(my_min, stock_name, frame, mydate, 'Low',
                                                                        thres=threl,
                                                                        sell_limit=my_limit)
@@ -287,8 +289,6 @@ def run_now():
         current_date = find_limit(current_date, 1)
         if not buyed and len(purchased) == 0 and len(founded) == 0 and not selled1:
             break
-        # if current_date >= date2:
-        #     break
     print('Total transactions:', len(transactions))
     print('Total $ in billions:', total_money / 10 ** 9)
     print('Both money $ in billions:', both_money / 10 ** 9)
