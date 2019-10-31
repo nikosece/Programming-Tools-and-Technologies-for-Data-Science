@@ -246,7 +246,7 @@ def run_now():
         selled1 = False
         founded = list()
         c = abs((min_date_sell - current_date).days)
-        if (c == 0 and len(purchased) == 0) or c > 5:
+        if (c == 0 and len(purchased) == 0) or c > 3:
             if current_date > date1:
                 founded = find_something(1.4, 2200, 12, reduced_stocks)
             elif current_date > date2:
