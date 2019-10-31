@@ -5,6 +5,7 @@ import pandas as pd
 import datetime
 import numpy as np
 from multiprocessing import Pool
+from pdb import set_trace
 import time
 
 
@@ -239,6 +240,8 @@ def run_now():
     date4 = convert_date('1990-01-01')
     date5 = convert_date('1985-01-01')
     date6 = convert_date('1970-01-01')
+    date7 = convert_date('2013-01-01')
+    date8 = convert_date('2017-03-01')
 
     while current_date <= end_date:
         buyed = False
@@ -273,6 +276,17 @@ def run_now():
                 if founded[re][0] <= min_date_sell:
                     if buy(founded[re][1], founded[re][0], 'Low', founded[re][3]):
                         buyed = True
+                        last_buy = founded[re][0]
+        else:
+            should = abs((current_date - last_buy).days)        # 15 days window
+            if should>=10 and current_date > date1 and current_date < date8:
+                founded = find_something(1.4, 2200, c, reduced_stocks2)
+                for re in range(len(founded)):     
+                    if founded[re][0] <= min_date_sell:
+                        if buy(founded[re][1], founded[re][0], 'Low', founded[re][3]):
+                            buyed = True
+                            last_buy = founded[re][0]
+                                            
         both_money = sum(purchased[y][0] * purchased[y][4] for y in purchased) + total_money
         if (not buyed or len(founded) == 0) and len(purchased) > 0:
             if min_date_sell > current_date:
