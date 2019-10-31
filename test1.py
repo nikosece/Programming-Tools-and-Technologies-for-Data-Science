@@ -5,7 +5,6 @@ import pandas as pd
 import datetime
 import numpy as np
 from multiprocessing import Pool
-from pdb import set_trace
 import time
 
 
@@ -38,18 +37,18 @@ def read_csv(filename):
     return [filename, frame, frame.index[0]]
 
 
-def reduce_stocks(thres=40):
+def reduce_stocks(thres, date1, date2):
     """Exclude stocks with variance lower than
         thers, so the calculations be faster and
         more efficient"""
     global mylist, dates_dict
     newdict = {}
-    my_date = convert_date('2005-01-01')
     for i in mylist:
-        frame = dates_dict[i][1]
-        frame = frame.loc[my_date:]
-        if frame.var().High > thres:
-            newdict[i] = frame
+        if dates_dict[i][0] <= date2:
+            frame = dates_dict[i][1]
+            frame = frame.loc[date1:date2]
+            if frame.var().High > thres:
+                newdict[i] = frame
     return newdict
 
 
@@ -98,7 +97,7 @@ def buy_total(frame, date, buy_value, sell_date):  # if i keep them it is more c
         return 0
 
 
-def worth_buy(buy_value, stock_name, frame, date, code, thres=2.0, sell_limit=0):
+def worth_buy(buy_value, stock_name, frame, date, code, thres=2.0):
     """ Checks if the stock
         is wotrth buying"""
     global keep_time, end_date, total_money, sell_dict
@@ -176,7 +175,7 @@ def initialize():
 
 def find_something(threl=2.0, my_limit=150, far=365, mystocks=None):
     """ Find stocks tha are worth buying"""
-    global current_date, total_money, min_date, current_name, dates_dict, mylist, min_date_sell, reduced_stocks, mylist2
+    global current_date, total_money, min_date, current_name, dates_dict, mylist, min_date_sell, mylist2
     worthing = list()
     min_date = current_date + datetime.timedelta(days=1200)
     far2 = current_date + datetime.timedelta(days=2 * far)
@@ -194,8 +193,7 @@ def find_something(threl=2.0, my_limit=150, far=365, mystocks=None):
                     frame = frame.loc[mydate:where]
                     if total_money >= my_min > 0 and frame.High.max() / my_min > threl:
                         ans, res, when_sell, total, income = worth_buy(my_min, stock_name, frame, mydate, 'Low',
-                                                                       thres=threl,
-                                                                       sell_limit=my_limit)
+                                                                       thres=threl)
                         if ans:
                             if current_date > convert_date('2000-01-01'):
                                 if income > 3 * 10 ** 6:
@@ -209,7 +207,7 @@ def find_something(threl=2.0, my_limit=150, far=365, mystocks=None):
     else:
         for stock_name in mystocks:
             if dates_dict[stock_name][0] <= current_date:
-                frame = reduced_stocks[stock_name]
+                frame = dates_dict[stock_name][1]
                 temp = frame.loc[current_date:far2]
                 if not temp.empty:
                     mydate = temp.Low.idxmin()
@@ -218,8 +216,7 @@ def find_something(threl=2.0, my_limit=150, far=365, mystocks=None):
                     frame = frame.loc[mydate:where]
                     if total_money >= my_min > 0 and frame.High.max() / my_min > threl:
                         ans, res, when_sell, total, income = worth_buy(my_min, stock_name, frame, mydate, 'Low',
-                                                                       thres=threl,
-                                                                       sell_limit=my_limit)
+                                                                       thres=threl)
                         if ans and total > 100:
                             if income > 3 * 10 ** 6:
                                 worthing.append([mydate, stock_name, res, when_sell, total, income])
@@ -235,7 +232,7 @@ def find_something(threl=2.0, my_limit=150, far=365, mystocks=None):
 
 def run_now():
     """Run tests"""
-    global current_date, end_date, both_money, total_money, purchased, min_date_sell, sell_dict, reduced_stocks
+    global current_date, end_date, both_money, total_money, purchased, min_date_sell, sell_dict, reduced_stocks1, reduced_stocks2
     date1 = convert_date('2010-01-01')
     date2 = convert_date('2005-01-01')
     date3 = convert_date('2000-01-01')
@@ -250,9 +247,9 @@ def run_now():
         c = abs((min_date_sell - current_date).days)
         if (c == 0 and len(purchased) == 0) or c > 3:
             if current_date > date1:
-                founded = find_something(1.4, 2200, 12, reduced_stocks)
+                founded = find_something(1.4, 2200, 12, reduced_stocks2)
             elif current_date > date2:
-                founded = find_something(1.4, 2500, 8, reduced_stocks)
+                founded = find_something(1.4, 2500, 8, reduced_stocks1)
             elif current_date > date3:
                 if total_money / both_money > 0.1:
                     founded = find_something(1.5, 500, 10)
@@ -322,6 +319,8 @@ if __name__ == '__main__':
     start = time.time()
     initialize()
     check = convert_date('2005-01-01')
+    check2 = convert_date('2010-01-01')
+    check3 = convert_date('2017-11-10')
     for x in mylist:
         if dates_dict[x][0] <= check:
             mylist2.append(x)
@@ -334,6 +333,7 @@ if __name__ == '__main__':
             selled = True
         del sell_dict[current_date]
     find_min_date()
-    reduced_stocks = reduce_stocks(40)
+    reduced_stocks1 = reduce_stocks(40, check, check2)
+    reduced_stocks2 = reduce_stocks(40, check2, check3)
     run_now()
     print('It took', (time.time() - start) / 60.0, 'minutes.')
