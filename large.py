@@ -6,6 +6,7 @@ import datetime
 import numpy as np
 from multiprocessing import Pool
 from pdb import set_trace
+import matplotlib.pyplot as plt
 import time
 
 
@@ -27,15 +28,23 @@ def reset_system(when='2017-11-10'):
     del sell_dict[current_date]
 
 
+def portofolio():
+    global current_date, fixed_frames, purchased
+    return sum(fixed_frames[x][current_date]*purchased[x][0] for x in purchased)
+
 def convert_date(my_date):
     return datetime.datetime.strptime(my_date, "%Y-%m-%d")
 
 
 def read_csv(filename):
     """converts a filename to a pandas dataframe"""
-    frame = pd.read_csv('C:/Users/tzagk/Downloads/Stocks/' + filename, dtype=size_dict, usecols=use_cols, header=0,
+    # frame = pd.read_csv('C:/Users/tzagk/Downloads/Stocks/' + filename, dtype=size_dict, usecols=use_cols, header=0,
+    #                     index_col="Date", parse_dates=True)
+    frame = pd.read_csv('C:/Users/tzagk/Downloads/Stocks/' + filename, dtype=size_dict, header=0,
                         index_col="Date", parse_dates=True)
-    return [filename, frame, frame.index[0]]
+    all_days = pd.date_range(frame.index.min(), frame.index.max(), freq='D')
+    frame2 = frame.reindex(index = all_days, method = 'nearest')['Close'] 
+    return [filename, frame, frame.index[0]], [filename,frame2]
 
 
 def reduce_stocks(thres, date1, date2):
@@ -163,14 +172,15 @@ def sell(date, stock_name, code):
 
 
 def initialize():
-    global dates_dict, mylist
+    global dates_dict, mylist, fixed_frames
     if __name__ == '__main__':
         file_names = [stock_name for stock_name in listdir('C:/Users/tzagk/Downloads/Stocks') if
                       isfile(join('C:/Users/tzagk/Downloads/Stocks', stock_name))]
         with Pool(processes=12) as pool:  # or whatever your hardware can support
             df_list = pool.map(read_csv, file_names)
         list1 = df_list
-        dates_dict = {i[0]: [i[2], i[1]] for i in list1}
+        dates_dict = {i[0][0]: [i[0][2], i[0][1]] for i in list1}
+        fixed_frames = {i[1][0]: i[1][1] for i in list1}
         mylist = dates_dict.keys()
 
 
@@ -233,7 +243,7 @@ def find_something(threl=2.0, my_limit=150, far=365, mystocks=None):
 
 def run_now():
     """Run tests"""
-    global current_date, end_date, both_money, total_money, purchased, min_date_sell, sell_dict, reduced_stocks1, reduced_stocks2
+    global current_date, end_date, both_money, total_money, purchased, min_date_sell, sell_dict, reduced_stocks1, reduced_stocks2, dates_lists, total_list, portofolio_list
     date1 = convert_date('2010-01-01')
     date2 = convert_date('2005-01-01')
     date3 = convert_date('2000-01-01')
@@ -297,6 +307,9 @@ def run_now():
                 selled1 = True
             del sell_dict[current_date]
             find_min_date()
+        dates_lists.append(current_date)
+        total_list.append(total_money)
+        portofolio_list.append(portofolio()+total_money)
         current_date = find_limit(current_date, 1)
         if not buyed and len(purchased) == 0 and len(founded) == 0 and not selled1:
             break
@@ -309,7 +322,20 @@ def run_now():
         for item in transactions:
             f.write("%s\n" % item)
 
-
+    dates_lists.pop()
+    portofolio_list.pop()
+    total_list.pop()
+    d = {'Portofolio': portofolio_list, 'Balance': total_list}
+    frame = pd.DataFrame(d,dates_lists)
+    all_days = pd.date_range(frame.index.min(), frame.index.max(), freq='D')
+    frame2 = frame.reindex(index = all_days, method = 'pad') 
+    portofolio_list =  frame2['Portofolio'].values.tolist()
+    total_list =  frame2['Balance'].values.tolist()
+    p2 = plt.bar(all_days, portofolio_list,5.0,log='True',color='orange')
+    p1 = plt.bar(all_days, total_list,5.0,log='True',color='b')
+    plt.title('Valuation')
+    plt.legend((p1[0], p2[0]), ('Balance', 'Portofolio'))
+    plt.savefig('Results.png')
 total_money = 1  # starting with 1$
 both_money = 1
 purchased = {}  # quantity,buy price,buy date,sell date
@@ -317,6 +343,7 @@ min_date = convert_date('1970-01-01')
 current_date = convert_date('1962-06-25')
 keep_time = 120  # max time before sell,3 months !!! must be equal when searching
 dates_dict = {}  # keeping all csv files with their first date -> reducing search time
+fixed_frames = {}
 mylist = list()  # contain all file names that are not empty
 transactions = list()  # the output
 sell_when = ''
@@ -328,6 +355,9 @@ size_dict = {'Low': np.float64, 'High': np.float64, 'Volume': np.uint64}
 selling_test = {}
 current_name = 'ge.us.txt'
 mylist2 = list()
+dates_lists = list()
+total_list = list()
+portofolio_list = list()
 
 if __name__ == '__main__':
     start = time.time()
@@ -340,12 +370,18 @@ if __name__ == '__main__':
             mylist2.append(x)
     data = dates_dict[current_name][1]
     buy(current_name, current_date, 'Low', min_date_sell)
+    dates_lists.append(current_date)
+    total_list.append(total_money)
+    portofolio_list.append(portofolio()+total_money)
     current_date = min_date_sell
     if current_date in sell_dict:
         for stock in sell_dict[current_date]:
             sell(current_date, stock, 'High')
             selled = True
         del sell_dict[current_date]
+    dates_lists.append(current_date)
+    total_list.append(total_money)
+    portofolio_list.append(portofolio()+total_money)    
     find_min_date()
     reduced_stocks1 = reduce_stocks(40, check, check2)
     reduced_stocks2 = reduce_stocks(40, check2, check3)
