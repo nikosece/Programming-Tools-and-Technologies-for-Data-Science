@@ -316,7 +316,7 @@ def run_now():
     print('Total transactions:', len(transactions))
     print('Total $ in billions:', total_money / 10 ** 9)
     print('Both money $ in billions:', both_money / 10 ** 9)
-    with open('data3.txt', 'w') as f:
+    with open('large.txt', 'w') as f:
         f.write(str(len(transactions)))
         f.write('\n')
         for item in transactions:
